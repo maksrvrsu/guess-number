@@ -69,21 +69,16 @@ func playGame(reader *bufio.Reader) {
 		history = append(history, guess)
 		attemptsUsed++
 
-		if guess == secretNumber {
-			fmt.Printf("%sВы угадали!🙌%s\n", colorGreen, colorReset)
+		// Вызов новой функции сравнения по требованию бадди
+		if compareNumbers(guess, secretNumber) {
 			won = true
 			break
-		}
-
-		if guess < secretNumber {
-			fmt.Println("Секретное число больше 👆")
-		} else {
-			fmt.Println("Секретное число меньше 👇")
 		}
 
 		printDistanceHint(guess, secretNumber)
 		fmt.Println()
 	}
+
 	outcome := "победа"
 	if !won {
 		outcome = "проигрыш"
@@ -93,6 +88,22 @@ func playGame(reader *bufio.Reader) {
 
 	saveResult(outcome, attemptsUsed)
 	fmt.Println("Игра закончена!")
+}
+
+// Новая функция, которую просил вынести проверяющий
+func compareNumbers(guess, secret int) bool {
+	if guess == secret {
+		fmt.Printf("%sВы угадали!🙌%s\n", colorGreen, colorReset)
+		return true
+	}
+
+	if guess < secret {
+		fmt.Println("Секретное число больше 👆")
+	} else {
+		fmt.Println("Секретное число меньше 👇")
+	}
+
+	return false
 }
 
 func selectDifficulty(reader *bufio.Reader) (maxNumber int, attempts int) {
@@ -163,7 +174,10 @@ func saveResult(outcome string, attempts int) {
 
 	fileData, err := os.ReadFile(filename)
 	if err == nil {
-		_ = json.Unmarshal(fileData, &results)
+		err = json.Unmarshal(fileData, &results)
+		if err != nil {
+			fmt.Println("Ошибка парсинга истории:", err)
+		}
 	}
 
 	newEntry := GameResult{
@@ -180,5 +194,8 @@ func saveResult(outcome string, attempts int) {
 		return
 	}
 
-	_ = os.WriteFile(filename, bytes, 0644)
+	err = os.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		fmt.Println("Ошибка записи файла:", err)
+	}
 }
